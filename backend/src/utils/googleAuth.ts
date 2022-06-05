@@ -14,32 +14,6 @@ passport.use(
             callbackURL: process.env.GOOGLE_CALLBACK_URL,
         },
         (_accessToken:any, _refreshToken:any, profile:any, done:any) => {
-            // console.log(profile);
-            // const email = profile.emails[0].value;
-            // User.findOne({ email }, async (err: Error, doc: UserInterface) => {
-            //     if (err) {
-            //         console.log('Error finding user: ', err);
-            //         return done(err);
-            //     }
-            //     if (doc) {
-            //         return done(null, doc);
-            //     }
-            //     const newUser = new User({
-            //         email,
-            //         displayName: profile.displayName,
-            //         firstName: profile.name.givenName,
-            //         lastName: profile.name.familyName,
-            //         role: 'user',
-            //         vpoints: 1,
-            //     });
-            //     try {
-            //         await newUser.save();
-            //         return done(null, newUser);
-            //     } catch (err) {
-            //         console.log('Error creating user: ', err);
-            //         return done(err);
-            //     }
-            // });
             done(undefined, profile);
         }
     )

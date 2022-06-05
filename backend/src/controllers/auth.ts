@@ -55,7 +55,7 @@ const login = (req: Request, res: Response, next: NextFunction) => {
 };
 
 const googleLogin = (req: Request, res: Response) => {
-    const profile:any = req.user;
+    const profile: any = req.user;
     const email = profile.emails[0].value;
     User.findOne({ email }, async (err: Error, doc: UserInterface) => {
         if (err) {
@@ -73,8 +73,23 @@ const googleLogin = (req: Request, res: Response) => {
     });
 };
 
+const logout = (req: Request, res: Response) => {
+    if (req.user) {
+        req.logout(function (err) {
+            if (err) {
+                console.log('Error logging out: ', err);
+                res.status(500).send(err);
+                return;
+            }
+            res.redirect('/');
+        });
+    }
+    console.log(req.user);
+};
+
 export default {
     register,
     login,
     googleLogin,
+    logout
 }
