@@ -1,8 +1,6 @@
 import passport from 'passport';
 import GoogleStrategy from 'passport-google-oauth20';
 import { config } from 'dotenv';
-import { User } from '../models/users';
-import UserInterface from './userInterface';
 
 config();
 

@@ -77,14 +77,14 @@ const logout = (req: Request, res: Response) => {
     if (req.user) {
         req.logout(function (err) {
             if (err) {
-                console.log('Error logging out: ', err);
+                console.error('Error logging out: ', err);
                 res.status(500).send(err);
                 return;
             }
-            res.redirect('/');
+            res.status(200).send('User logged out successfully');
         });
     }
-    console.log(req.user);
+    res.status(200).send('User logged out successfully');
 };
 
 export default {
