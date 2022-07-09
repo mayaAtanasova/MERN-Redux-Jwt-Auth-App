@@ -7,6 +7,7 @@ import styles from './Login.module.css';
 
 import { IErrors } from '../Interfaces/IError';
 import { useLoginFormValidator } from '../../helpers/useLoginFormValidators';
+import useDebounce from '../../helpers/useDebounce';
 
 const LoginForm = () => {
 
@@ -14,6 +15,7 @@ const LoginForm = () => {
         email: '',
         password: '',
     });
+    const debouncedFormValue = useDebounce(form, 500);
     const [showPass, setShowPass] = useState(false);
     const [formValid, setFormValid] = useState(false);
 
@@ -27,33 +29,39 @@ const LoginForm = () => {
         onBlurField: FocusEventHandler,
     } = useLoginFormValidator(form);
 
-    useEffect(()=> {
+    useEffect(() => {
         const { isFormValid } = validateForm({
             form,
             errors,
         });
-        console.log(formValid);
         setFormValid(isFormValid);
     }, []);
 
     const onUpdateField = (e: any) => {
         const field = e.target.name;
+        const value = e.target.value;
         const nextFormState = {
             ...form,
-            [field]: e.target.value,
+            [field]: value,
         };
-
-        setForm(nextFormState);
-
         errors[field].dirty = true;
+        setForm(nextFormState);
+    }
+
+    useEffect(() => {
+        onValidateField();
+    }, [debouncedFormValue]);
+
+    const onValidateField = () => {
         const { isFormValid } =
             validateForm({
-                form: nextFormState,
+                form,
                 errors,
             });
         setFormValid(isFormValid);
-            console.log(formValid)
     };
+
+
 
     const revealPass = (event: React.MouseEvent) => {
         event.preventDefault();
@@ -133,10 +141,10 @@ const LoginForm = () => {
             </div>
 
             <div className={styles.formActions}>
-                <button 
-                className={styles.formSubmitBtn} 
-                type="submit"
-                disabled={!formValid}
+                <button
+                    className={styles.formSubmitBtn}
+                    type="submit"
+                    disabled={!formValid}
                 >
                     Login
                 </button>

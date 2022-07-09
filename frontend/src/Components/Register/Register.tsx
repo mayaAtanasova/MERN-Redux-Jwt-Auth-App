@@ -7,6 +7,7 @@ import styles from './Register.module.css';
 
 import { IErrors } from '../Interfaces/IError';
 import { useLoginFormValidator } from '../../helpers/useLoginFormValidators';
+import useDebounce from '../../helpers/useDebounce';
 
 const Register = () => {
 
@@ -17,6 +18,7 @@ const Register = () => {
         password: '',
         confirmPassword: '',
     });
+    const debouncedFormValue = useDebounce(form, 500);
     const [showPass, setShowPass] = useState(false);
     const [showRePass, setShowRePass] = useState(false);
     const [formValid, setFormValid] = useState(false);
@@ -41,21 +43,26 @@ const Register = () => {
 
     const onUpdateField = (e: any) => {
         const field = e.target.name;
+        const value = e.target.value;
         const nextFormState = {
             ...form,
-            [field]: e.target.value,
+            [field]: value,
         };
-
-        setForm(nextFormState);
-
         errors[field].dirty = true;
+        setForm(nextFormState);
+    }
+
+    useEffect(() => {
+        onValidateField();
+    }, [debouncedFormValue]);
+
+    const onValidateField = () => {
         const { isFormValid } =
             validateForm({
-                form: nextFormState,
+                form,
                 errors,
             });
         setFormValid(isFormValid);
-
     };
 
     const revealPass = (event: React.MouseEvent) => {
