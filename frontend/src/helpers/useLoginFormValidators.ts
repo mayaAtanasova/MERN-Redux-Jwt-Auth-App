@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
-    nameValidaotr,
+    nameValidator,
     emailValidator,
     passwordValidator,
     confrimPasswordValidator,
@@ -34,7 +34,8 @@ export const useLoginFormValidator = (form: IForm) => {
     const validatorsDict: {
         [key: string]: Function,
     } = ({
-        'name': nameValidaotr,
+        'firstName': nameValidator,
+        'lastName': nameValidator,
         'email': emailValidator,
         'password': passwordValidator,
         'confirmPassword': confrimPasswordValidator,
@@ -42,11 +43,10 @@ export const useLoginFormValidator = (form: IForm) => {
 
     const [errors, setErrors] = useState(initialState);
 
-    const validateForm = ({ form, errors, forceTouchErrors = false }: { form: IForm, errors: IErrors, forceTouchErrors: boolean }) => {
-        let isValid = true;
+    const validateForm = ({ form, errors, forceTouchErrors }: { form: IForm, errors: IErrors, forceTouchErrors: boolean }) => {
 
         //create a deep copy of the errors object
-        let nextErrors = JSON.parse(JSON.stringify(errors));
+        let nextErrors:IErrors = JSON.parse(JSON.stringify(errors));
 
         //force validate all the fields on submit form
         if (forceTouchErrors) {
@@ -55,20 +55,18 @@ export const useLoginFormValidator = (form: IForm) => {
 
         fieldNames.forEach(fieldName => {
             const fieldValue = form[fieldName];
-            let error = '';
             if (nextErrors[fieldName].dirty) {
-                error = validatorsDict[fieldName](fieldValue, form.password);
+                const error = validatorsDict[fieldName](fieldValue, form.password);
                 nextErrors[fieldName].error = !!error;
                 nextErrors[fieldName].message = error;
             };
-            isValid = Object.keys(nextErrors).every(key => !nextErrors[key].error);
-
         });
-
+        const formErrors = Object.values(nextErrors);
+        const isFormValid = formErrors.every(error => error.dirty) && formErrors.every(field => !field.error);
         setErrors(nextErrors);
 
         return {
-            isValid,
+            isFormValid,
             errors: nextErrors,
         };
 

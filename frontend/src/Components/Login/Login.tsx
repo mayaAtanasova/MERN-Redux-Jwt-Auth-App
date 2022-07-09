@@ -1,4 +1,7 @@
-import { FocusEventHandler, useState } from 'react';
+import { FocusEventHandler, useEffect, useState } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
+
 import clsx from 'clsx';
 import styles from './Login.module.css';
 
@@ -10,11 +13,28 @@ const LoginForm = () => {
     const [form, setForm] = useState({
         email: '',
         password: '',
-        confirmPassword: '',
     });
+    const [showPass, setShowPass] = useState(false);
+    const [formValid, setFormValid] = useState(false);
 
+    const {
+        errors,
+        validateForm,
+        onBlurField,
+    }: {
+        errors: IErrors,
+        validateForm: Function,
+        onBlurField: FocusEventHandler,
+    } = useLoginFormValidator(form);
 
-    const { errors, validateForm, onBlurField } : { errors: IErrors, validateForm: Function, onBlurField: FocusEventHandler} = useLoginFormValidator(form);
+    useEffect(()=> {
+        const { isFormValid } = validateForm({
+            form,
+            errors,
+        });
+        console.log(formValid);
+        setFormValid(isFormValid);
+    }, []);
 
     const onUpdateField = (e: any) => {
         const field = e.target.name;
@@ -25,25 +45,34 @@ const LoginForm = () => {
 
         setForm(nextFormState);
 
-        if (errors[field].dirty) {
+        errors[field].dirty = true;
+        const { isFormValid } =
             validateForm({
                 form: nextFormState,
                 errors,
             });
-        }
+        setFormValid(isFormValid);
+            console.log(formValid)
     };
+
+    const revealPass = (event: React.MouseEvent) => {
+        event.preventDefault();
+        setShowPass(showPass => !showPass);
+    }
 
     const onSubmitForm = (e: any) => {
         e.preventDefault();
-        console.log('submit');
-
-        const { isValid } = validateForm({
+        console.log('submitting');
+        const forceTouchErrors = true;
+        const { isFormValid } = validateForm({
             form,
             errors,
-            forceTouchErros: true
+            forceTouchErrors
         });
-        console.log(isValid);
-        if (!isValid) {return;}
+        setFormValid(isFormValid);
+        if (!formValid) {
+            return;
+        }
 
         console.log(JSON.stringify(form, null, 2));
     };
@@ -53,6 +82,9 @@ const LoginForm = () => {
             className={styles.form}
             onSubmit={onSubmitForm}
         >
+            <div className={styles.formTitle}>
+                <h1>Login Form</h1>
+            </div>
             <div className={styles.formGroup}>
                 <label className={styles.formLabel}>Email</label>
                 <input
@@ -63,6 +95,7 @@ const LoginForm = () => {
                     type="text"
                     aria-label='Email field'
                     name='email'
+                    placeholder="john.doe@my.com"
                     value={form.email}
                     onChange={onUpdateField}
                     onBlur={onBlurField}
@@ -71,47 +104,40 @@ const LoginForm = () => {
                     <p className={styles.formFieldErrorMessage}>{errors.email.message}</p>
                 ) : null}
             </div>
+
             <div className={styles.formGroup}>
                 <label className={styles.formLabel}>Password</label>
-                <input
-                    className={clsx(
-                        styles.formField,
-                        errors.password.dirty &&
-                        errors.password.error &&
-                        styles.formFieldError
-                    )}
-                    type="password"
-                    aria-label='Password field'
-                    name='password'
-                    value={form.password}
-                    onChange={onUpdateField}
-                    onBlur={onBlurField}
-                />
+                <div className={styles.inputGroup}>
+                    <input
+                        className={clsx(
+                            styles.formField,
+                            errors.password.dirty &&
+                            errors.password.error &&
+                            styles.formFieldError
+                        )}
+                        type={showPass ? 'text' : 'password'}
+                        aria-label='Password field'
+                        name='password'
+                        placeholder="********"
+                        value={form.password}
+                        onChange={onUpdateField}
+                        onBlur={onBlurField}
+                    />
+                    <div className={styles.faIcon} onClick={revealPass}>
+                        <FontAwesomeIcon icon={showPass ? faEyeSlash : faEye} />
+                    </div>
+                </div>
                 {errors.password.dirty && errors.password.error ? (
                     <p className={styles.formFieldErrorMessage}>{errors.password.message}</p>
                 ) : null}
             </div>
-            <div className={styles.formGroup}>
-                <label className={styles.formLabel}>Confirm Password</label>
-                <input
-                    className={clsx(
-                        styles.formField,
-                        errors.confirmPassword.dirty &&
-                        errors.confirmPassword.error &&
-                        styles.formFieldError)}
-                    type="password"
-                    aria-label='Confirm password field'
-                    name='confirmPassword'
-                    value={form.confirmPassword}
-                    onChange={onUpdateField}
-                    onBlur={onBlurField}
-                />
-                {errors.confirmPassword.dirty && errors.confirmPassword.error ? (
-                    <p className={styles.formFieldErrorMessage}>{errors.confirmPassword.message}</p>
-                ) : null}
-            </div>
+
             <div className={styles.formActions}>
-                <button className={styles.formSubmitBtn} type="submit">
+                <button 
+                className={styles.formSubmitBtn} 
+                type="submit"
+                disabled={!formValid}
+                >
                     Login
                 </button>
             </div>

@@ -1,6 +1,6 @@
 import isEmail from 'validator/lib/isEmail';
 
-export const nameValidaotr = (name: string): string => {
+export const nameValidator = (name: string): string => {
     if (!name) {
         return 'Name is required';
     }
