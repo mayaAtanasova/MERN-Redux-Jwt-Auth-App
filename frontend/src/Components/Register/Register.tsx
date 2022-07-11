@@ -1,13 +1,18 @@
 import { FocusEventHandler, useEffect, useState } from 'react';
+import { Navigate } from 'react-router-dom';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 import clsx from 'clsx';
 import styles from './Register.module.css';
 
-import { IErrors } from '../Interfaces/IError';
-import { useLoginFormValidator } from '../../helpers/useLoginFormValidators';
-import useDebounce from '../../helpers/useDebounce';
+import { useMyDispatch, useMySelector } from '../../hooks/useReduxHooks';
+import { register } from '../../store/authSlice';
+import { clearMessage } from '../../store/messageSlice';
+import { useLoginFormValidator } from '../../hooks/useLoginFormValidators';
+import useDebounce from '../../hooks/useDebounce';
+
+import { IErrors } from '../../Interfaces/IError';
 
 const Register = () => {
 
@@ -23,6 +28,10 @@ const Register = () => {
     const [showRePass, setShowRePass] = useState(false);
     const [formValid, setFormValid] = useState(false);
 
+    const { loading, isAuthenticated, isAdmin } = useMySelector((state: any) => state.auth);
+    const { message } = useMySelector((state: any) => state.message);
+    const dispatch = useMyDispatch();
+
     const {
         errors,
         validateForm,
@@ -33,7 +42,11 @@ const Register = () => {
         onBlurField: FocusEventHandler
     } = useLoginFormValidator(form);
 
-    useEffect(()=> {
+    useEffect(() => {
+        dispatch(clearMessage());
+    }, [dispatch]);
+
+    useEffect(() => {
         const { isFormValid } = validateForm({
             form,
             errors,
@@ -77,20 +90,27 @@ const Register = () => {
 
     const onSubmitForm = (e: any) => {
         e.preventDefault();
-        console.log('submitting');
-        const forceTouchErrors = true;
-        const { isFormValid } = validateForm({
-            form,
-            errors,
-            forceTouchErrors
-        });
-        setFormValid(isFormValid);
-        if (!formValid) {
-            return;
-        }
 
-        console.log(JSON.stringify(form, null, 2));
+        const { isFormValid } =
+            validateForm({
+                form,
+                errors,
+            });
+        setFormValid(isFormValid);
+
+        dispatch(register(form))
+            .unwrap()
+            .then(value => {
+                console.log(value);
+            })
+            .catch(error => {
+                console.error(error);
+            })
     };
+
+    if (isAuthenticated) {
+        return <Navigate to="/" /> //or a user dashboard
+    }
 
     return (
         <form
@@ -212,10 +232,10 @@ const Register = () => {
                 ) : null}
             </div>
             <div className={styles.formActions}>
-                <button 
+                <button
                     className={styles.formSubmitBtn}
                     type="submit"
-                    disabled={!formValid}
+                    disabled={!formValid || loading}
                 >
                     Register
                 </button>

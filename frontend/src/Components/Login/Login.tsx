@@ -1,13 +1,19 @@
 import { FocusEventHandler, useEffect, useState } from 'react';
+import { Navigate } from 'react-router-dom';
+import { TokenResponse, useGoogleLogin } from '@react-oauth/google'
+
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
-
 import clsx from 'clsx';
 import styles from './Login.module.css';
 
-import { IErrors } from '../Interfaces/IError';
-import { useLoginFormValidator } from '../../helpers/useLoginFormValidators';
-import useDebounce from '../../helpers/useDebounce';
+import { useMyDispatch, useMySelector } from '../../hooks/useReduxHooks';
+import { login, googleLogin } from '../../store/authSlice';
+import { clearMessage } from '../../store/messageSlice';
+import { useLoginFormValidator } from '../../hooks/useLoginFormValidators';
+import useDebounce from '../../hooks/useDebounce';
+
+import { IErrors } from '../../Interfaces/IError';
 
 const LoginForm = () => {
 
@@ -19,6 +25,11 @@ const LoginForm = () => {
     const [showPass, setShowPass] = useState(false);
     const [formValid, setFormValid] = useState(false);
 
+    const { loading, isAuthenticated, isAdmin } = useMySelector((state: any) => state.auth);
+    const { message } = useMySelector((state: any) => state.message);
+    const dispatch = useMyDispatch();
+
+
     const {
         errors,
         validateForm,
@@ -28,6 +39,10 @@ const LoginForm = () => {
         validateForm: Function,
         onBlurField: FocusEventHandler,
     } = useLoginFormValidator(form);
+
+    useEffect(() => {
+        dispatch(clearMessage());
+    }, [dispatch]);
 
     useEffect(() => {
         const { isFormValid } = validateForm({
@@ -61,8 +76,6 @@ const LoginForm = () => {
         setFormValid(isFormValid);
     };
 
-
-
     const revealPass = (event: React.MouseEvent) => {
         event.preventDefault();
         setShowPass(showPass => !showPass);
@@ -70,20 +83,39 @@ const LoginForm = () => {
 
     const onSubmitForm = (e: any) => {
         e.preventDefault();
-        console.log('submitting');
-        const forceTouchErrors = true;
-        const { isFormValid } = validateForm({
-            form,
-            errors,
-            forceTouchErrors
-        });
-        setFormValid(isFormValid);
-        if (!formValid) {
-            return;
-        }
 
-        console.log(JSON.stringify(form, null, 2));
+        const { isFormValid } =
+            validateForm({
+                form,
+                errors,
+            });
+        setFormValid(isFormValid);
+
+        dispatch(login(form))
+            .unwrap()
+            .then((value: any) => {
+                console.log(value);
+            })
+            .catch((error: any) => {
+                console.log(error);
+            })
+
     };
+
+    const googleAuth = useGoogleLogin({
+        onSuccess: (response: TokenResponse) => {
+            console.log(response);
+            dispatch(googleLogin(response))
+        }
+    })
+
+    if (isAuthenticated) {
+        if (isAdmin) {
+            return <Navigate to="/admin" />
+        } else {
+            return <Navigate to="/" /> //or a user dashboard
+        }
+    }
 
     return (
         <form
@@ -144,11 +176,24 @@ const LoginForm = () => {
                 <button
                     className={styles.formSubmitBtn}
                     type="submit"
-                    disabled={!formValid}
+                    disabled={!formValid || loading}
                 >
                     Login
                 </button>
+                <p>or</p>
+                <button
+                    className={styles.googleBtn}
+                    type="button"
+                    onClick={() => googleAuth()}
+                >
+                    <span>
+                        <img src="/assets/google-logo.png" alt="Google_logo" />
+                    </span>
+                    or Proceed with Google
+                </button>
             </div>
+
+
         </form>
     );
 };

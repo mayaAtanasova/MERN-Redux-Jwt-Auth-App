@@ -5,8 +5,8 @@ import {
     passwordValidator,
     confrimPasswordValidator,
 } from './validators';
-import { IErrors } from '../Components/Interfaces/IError';
-import { IForm } from '../Components/Interfaces/IForm';
+import { IErrors } from '../Interfaces/IError';
+import { IForm } from '../Interfaces/IForm';
 
 const touchErrors = (errors: IErrors): IErrors => {
     return Object.entries(errors).reduce((acc, [field, fieldError]) => {

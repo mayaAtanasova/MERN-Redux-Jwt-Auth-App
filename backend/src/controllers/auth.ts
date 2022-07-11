@@ -4,7 +4,7 @@ import bcrypt from 'bcrypt';
 import UserInterface from '../utils/userInterface';
 import { issueJwt } from '../utils/jwt';
 
-const register = (req: Request, res: Response, next: NextFunction) => {
+const register = async (req: Request, res: Response, next: NextFunction) => {
     const { email, password, firstName, lastName, role } = req.body; //voting points to be added later
     const displayName = firstName + ' ' + lastName;
     const hashedp = bcrypt.hashSync(password, 10);
@@ -17,6 +17,12 @@ const register = (req: Request, res: Response, next: NextFunction) => {
         lastName,
         role,
     });
+    //check for duplicate email
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+        const error = new Error('Email is taken, please proceed to login');
+        return res.status(401).send({ message: 'Email is taken, please proceed to login'});
+    }
 
     newUser.save((err: Error, user: UserInterface) => {
         if (err) {
@@ -26,8 +32,10 @@ const register = (req: Request, res: Response, next: NextFunction) => {
         const token = issueJwt(user._id, user.displayName, user.role, user.vpoints);
         res.status(200).send({
             token,
+            message: 'User successfully registered'
         });
     })
+
 };
 
 const login = (req: Request, res: Response, next: NextFunction) => {
@@ -40,37 +48,42 @@ const login = (req: Request, res: Response, next: NextFunction) => {
             return;
         }
         if (!user) {
-            res.status(401).send('User not found');
+            res.status(401).send({message: 'User not found'});
             return;
         }
         if (!bcrypt.compareSync(password, user.hashedp)) {
-            res.status(401).send('Incorrect username/password combination');
+            res.status(401).send({message: 'Incorrect username/password combination'});
             return;
         }
         const token = issueJwt(user._id, user.displayName, user.role, user.vpoints);
         res.status(200).send({
             token,
+            message: 'User successfully logged in'
         });
     })
 };
 
 const googleLogin = (req: Request, res: Response) => {
-    const profile: any = req.user;
-    const email = profile.emails[0].value;
-    User.findOne({ email }, async (err: Error, doc: UserInterface) => {
+    const { email, firstName, lastName, displayName, role } = req.body; //voting points to be added later
+
+    const newUser = new User({
+        email,
+        displayName,
+        firstName,
+        lastName,
+        role,
+    });
+    newUser.save((err: Error, user: UserInterface) => {
         if (err) {
-            console.log('Error finding user: ', err);
-            return;
+            console.log('Error creating user: ', err);
+            res.status(500).send(err);
         }
-        if (!doc) {
-            console.log('No such user');
-            return;
-        }
-        const token = issueJwt(doc._id, doc.displayName, doc.role, doc.vpoints);
+        const token = issueJwt(user._id, user.displayName, user.role, user.vpoints);
         res.status(200).send({
             token,
+            message: 'User successfully authorized'
         });
-    });
+    })
 };
 
 const logout = (req: Request, res: Response) => {
@@ -81,10 +94,10 @@ const logout = (req: Request, res: Response) => {
                 res.status(500).send(err);
                 return;
             }
-            res.status(200).send('User logged out successfully');
+            res.status(200).send({message: 'User logged out successfully'});
         });
     }
-    res.status(200).send('User logged out successfully');
+    res.status(200).send({ message: 'User logged out successfully' });
 };
 
 export default {
