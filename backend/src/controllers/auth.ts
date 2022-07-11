@@ -21,13 +21,13 @@ const register = async (req: Request, res: Response, next: NextFunction) => {
     const existingUser = await User.findOne({ email });
     if (existingUser) {
         const error = new Error('Email is taken, please proceed to login');
-        return res.status(401).send({ message: 'Email is taken, please proceed to login'});
+        return res.status(401).send({ message: 'Email is taken, please proceed to login' });
     }
 
     newUser.save((err: Error, user: UserInterface) => {
         if (err) {
             console.log('Error creating user: ', err);
-            res.status(500).send(err);
+            return res.status(500).send(err);
         }
         const token = issueJwt(user._id, user.displayName, user.role, user.vpoints);
         res.status(200).send({
@@ -48,11 +48,15 @@ const login = (req: Request, res: Response, next: NextFunction) => {
             return;
         }
         if (!user) {
-            res.status(401).send({message: 'User not found'});
+            res.status(401).send({ message: 'User not found' });
+            return;
+        }
+        if(!user.hashedp){
+            res.status(401).send({ message: 'You are not registered, try a google sign-in.' });
             return;
         }
         if (!bcrypt.compareSync(password, user.hashedp)) {
-            res.status(401).send({message: 'Incorrect username/password combination'});
+            res.status(401).send({ message: 'Incorrect username/password combination' });
             return;
         }
         const token = issueJwt(user._id, user.displayName, user.role, user.vpoints);
@@ -63,8 +67,17 @@ const login = (req: Request, res: Response, next: NextFunction) => {
     })
 };
 
-const googleLogin = (req: Request, res: Response) => {
+const googleLogin = async (req: Request, res: Response) => {
     const { email, firstName, lastName, displayName, role } = req.body; //voting points to be added later
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+        const token = issueJwt(existingUser._id, existingUser.displayName, existingUser.role, existingUser.vpoints);
+        return res.status(200).send({
+            token,
+            message: 'User successfully authorized'
+        });
+    }
 
     const newUser = new User({
         email,
@@ -76,7 +89,7 @@ const googleLogin = (req: Request, res: Response) => {
     newUser.save((err: Error, user: UserInterface) => {
         if (err) {
             console.log('Error creating user: ', err);
-            res.status(500).send(err);
+            return res.status(500).send(err);
         }
         const token = issueJwt(user._id, user.displayName, user.role, user.vpoints);
         res.status(200).send({
@@ -84,25 +97,11 @@ const googleLogin = (req: Request, res: Response) => {
             message: 'User successfully authorized'
         });
     })
-};
 
-const logout = (req: Request, res: Response) => {
-    if (req.user) {
-        req.logout(function (err) {
-            if (err) {
-                console.error('Error logging out: ', err);
-                res.status(500).send(err);
-                return;
-            }
-            res.status(200).send({message: 'User logged out successfully'});
-        });
-    }
-    res.status(200).send({ message: 'User logged out successfully' });
 };
 
 export default {
     register,
     login,
     googleLogin,
-    logout
 }

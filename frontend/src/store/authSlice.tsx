@@ -7,13 +7,6 @@ import jwtDecoder from "../hooks/jwtDecoder";
 import { TokenResponse } from "@react-oauth/google";
 
 let user: IUser | null = null
-//  {
-//     email: "",
-//     password: "",
-//     firstName: "",
-//     lastName: "",
-//     role: "",
-// };
 
 const tokenStr = localStorage.getItem("token");
 if (tokenStr) {

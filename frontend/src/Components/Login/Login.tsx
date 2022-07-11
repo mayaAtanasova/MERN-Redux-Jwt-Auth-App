@@ -9,7 +9,7 @@ import styles from './Login.module.css';
 
 import { useMyDispatch, useMySelector } from '../../hooks/useReduxHooks';
 import { login, googleLogin } from '../../store/authSlice';
-import { clearMessage } from '../../store/messageSlice';
+import { setMessage, clearMessage } from '../../store/messageSlice';
 import { useLoginFormValidator } from '../../hooks/useLoginFormValidators';
 import useDebounce from '../../hooks/useDebounce';
 
@@ -104,8 +104,11 @@ const LoginForm = () => {
 
     const googleAuth = useGoogleLogin({
         onSuccess: (response: TokenResponse) => {
-            console.log(response);
             dispatch(googleLogin(response))
+        },
+        onError: (error: any) => {
+            console.log(error);
+            dispatch(setMessage('Unsuccessful authorization, please try again.'));
         }
     })
 
