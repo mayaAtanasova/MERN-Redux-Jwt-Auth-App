@@ -9,6 +9,7 @@ import AdminDashboard from './Components/AdminDashboard/AdminDashboard';
 import { Provider } from 'react-redux';
 import store from './store/store';
 import { GoogleOAuthProvider } from '@react-oauth/google';
+import Profile from './Components/Profile/Profile';
 
 const clientId: string = process.env.REACT_APP_GOOGLE_CLIENT_ID ?? '';
 
@@ -24,6 +25,7 @@ function App() {
       <Route path="/logout" element={<Home />} />
       <Route path="/register" element={<Register />} />
       <Route path="/admin" element={<AdminDashboard />} />
+      < Route path='/profile' element={<Profile />} />
     </Routes>
     </BrowserRouter>
     </Provider>

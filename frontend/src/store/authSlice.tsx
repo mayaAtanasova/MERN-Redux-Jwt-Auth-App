@@ -80,7 +80,7 @@ export const logout = createAsyncThunk(
 
 const initialState = {
     user,
-    isAuthenticated: false,
+    isAuthenticated: !!user,
     isAdmin: user && user.role === 'admin',
     loading: false,
 };

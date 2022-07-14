@@ -181,7 +181,8 @@ const LoginForm = () => {
                     type="submit"
                     disabled={!formValid || loading}
                 >
-                    Login
+                    {!loading && <p>Login</p>}
+                    {loading && <p>...Loading</p>}
                 </button>
                 <p>or</p>
                 <button
